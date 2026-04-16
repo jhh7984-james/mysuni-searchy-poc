@@ -159,14 +159,21 @@ function keywordSearch(query, topK = 10) {
   const keywords = query.toLowerCase().split(/\s+/).filter(k => k.length >= 1);
   if (keywords.length === 0) return [];
 
-  const matched = cards.filter(card =>
-    keywords.some(kw => card.searchText.includes(kw))
-  );
+  const nameText   = card => card.name.toLowerCase();
+  const bodyText   = card => `${card.tagline} ${card.intro}`.toLowerCase();
 
-  // 등록일자 최신순 정렬 (형식: "2021.04.28 16:42:55")
-  matched.sort((a, b) => (b.regDate || '').localeCompare(a.regDate || ''));
+  const results = cards
+    .map(card => {
+      const inName = keywords.filter(kw => nameText(card).includes(kw)).length;
+      const inBody = keywords.filter(kw => bodyText(card).includes(kw)).length;
+      const score  = inName * 2 + inBody; // 제목 매칭 가중치 2배
+      return { card, score };
+    })
+    .filter(x => x.score > 0)
+    // 1순위: 제목 매칭 가중치(score) 높은 것, 2순위: 등록일 최신순
+    .sort((a, b) => b.score - a.score || (b.card.regDate || '').localeCompare(a.card.regDate || ''));
 
-  return matched.slice(0, topK);
+  return results.slice(0, topK).map(x => x.card);
 }
 
 function keywordSearchWide(query, topK = 60) {
