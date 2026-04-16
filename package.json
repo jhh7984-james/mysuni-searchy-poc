@@ -1,0 +1,17 @@
+{
+  "name": "mysuni-search-poc",
+  "version": "1.0.0",
+  "description": "MySUNI Keyword vs Intent Search POC",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.89.0",
+    "@xenova/transformers": "^2.17.2",
+    "csv-parse": "^6.2.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "iconv-lite": "^0.7.2"
+  }
+}
