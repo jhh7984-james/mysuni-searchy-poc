@@ -82,6 +82,7 @@ function loadCards() {
     channel:     headers.indexOf('Channel'),
     learners:    headers.indexOf('학습자'),
     completers:  headers.indexOf('이수자'),
+    regDate:     headers.indexOf('등록일자'),   // P열
     isPublic:    headers.indexOf('공개여부'),   // W열
     isActive:    headers.indexOf('사용여부'),   // X열
   };
@@ -102,6 +103,7 @@ function loadCards() {
       channel:     (cols[idx.channel] || '').trim(),
       learners:    parseInt(cols[idx.learners] || '0', 10) || 0,
       completers:  parseInt(cols[idx.completers] || '0', 10) || 0,
+      regDate:     (cols[idx.regDate] || '').trim(),
       isPublic:    (cols[idx.isPublic] || '').trim(),
       isActive:    (cols[idx.isActive] || '').trim(),
       searchText:  `${name} ${tagline} ${intro}`.toLowerCase(),
@@ -154,12 +156,17 @@ function bm25Score(queryTokens, docIdx, k1 = 1.5, b = 0.75) {
 }
 
 function keywordSearch(query, topK = 10) {
-  if (!bm25Index) buildBM25Index();
-  const queryTokens = tokenize(query);
-  if (queryTokens.length === 0) return [];
-  const scores = cards.map((_, i) => ({ i, score: bm25Score(queryTokens, i) })).filter(x => x.score > 0);
-  scores.sort((a, b) => b.score - a.score);
-  return scores.slice(0, topK).map(x => ({ ...cards[x.i], bm25Score: x.score }));
+  const keywords = query.toLowerCase().split(/\s+/).filter(k => k.length >= 1);
+  if (keywords.length === 0) return [];
+
+  const matched = cards.filter(card =>
+    keywords.some(kw => card.searchText.includes(kw))
+  );
+
+  // 등록일자 최신순 정렬 (형식: "2021.04.28 16:42:55")
+  matched.sort((a, b) => (b.regDate || '').localeCompare(a.regDate || ''));
+
+  return matched.slice(0, topK);
 }
 
 function keywordSearchWide(query, topK = 60) {
